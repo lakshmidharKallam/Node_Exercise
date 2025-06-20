@@ -19,11 +19,15 @@ const createUser = async (req, res) => {
         return res.status(400).json({ error: 'Username is required' });
     }
 
+    if (typeof username != 'string') {
+        return res.status(400).json({ error: 'Username must be a string' });
+    }
+
     const insertQuery = `INSERT INTO users (username) VALUES (?)`;
     
     db.run(insertQuery, [username], function (err) {
         if (err) {
-            return res.status(500).json({ error: 'Failed to create user', details: err.message });
+            return res.status(500).json({ error: 'Failed to create user check db connection, and backend server', details: err.message });
         }
 
         res.json({
