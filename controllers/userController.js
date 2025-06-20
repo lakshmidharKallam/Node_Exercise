@@ -19,12 +19,12 @@ const createUser = async (req, res) => {
         return res.status(400).json({ error: 'Username is required' });
     }
 
-    if (typeof username != 'string') {
-        return res.status(400).json({ error: 'Username must be a string' });
+    if (!username || typeof username !== 'string' || /^\d+$/.test(username.trim())) {
+        return res.status(400).json({ error: 'username is required and must be a string' });
     }
 
     const insertQuery = `INSERT INTO users (username) VALUES (?)`;
-    
+
     db.run(insertQuery, [username], function (err) {
         if (err) {
             return res.status(500).json({ error: 'Failed to create user check db connection, and backend server', details: err.message });
@@ -60,10 +60,16 @@ const getSingleUser = async (req, res) => {
 }
 
 const addExercise = async (req, res) => {
-    const userId = req.params._id;
+    const userId = parseInt(req.params._id);
+
+    if (!/^\d+$/.test(userId)) {
+        return res.status(400).json({ error: 'userId must be a valid number' });
+    }
+
     const { description, duration, date } = req.body;
 
-    if (!description || typeof description !== 'string') {
+    //special check for description
+    if (!description || typeof description !== 'string' || /^\d+$/.test(description.trim())) {
         return res.status(400).json({ error: 'Description is required and must be a string' });
     }
     if (!duration || duration < 0 || isNaN(parseInt(duration))) {
@@ -103,7 +109,11 @@ const addExercise = async (req, res) => {
 }
 
 const getUserExerciseLogs = async (req, res) => {
-    const userId = req.params._id;
+    const userId = parseInt(req.params._id);
+
+    if (!/^\d+$/.test(userId)) {
+        return res.status(400).json({ error: 'userId must be a valid number' });
+    }
     const { from, to, limit } = req.query;
 
     const getUserQuery = `SELECT id, username FROM users WHERE id = ?`;
