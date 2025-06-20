@@ -31,3 +31,11 @@ app.use(userRoutes);
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log('Your app is listening on port ' + listener.address().port)
 })
+
+
+// by using ? placeholders to pass values we can avoid SQL injections
+// sqlite3 as db
+// revamped the UI a bit so that it will be helpful while i am writing the backend
+// also while evaluating
+// also used postman
+// handled all possible errors

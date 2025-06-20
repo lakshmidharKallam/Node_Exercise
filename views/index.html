@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html>
   <head>
     <title>Exercise Tracker | freeCodeCamp</title>
@@ -43,4 +43,230 @@
       });
     </script>
   </body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Exercise Tracker | freeCodeCamp</title>
+  <link rel="shortcut icon" href="https://cdn.freecodecamp.org/universal/favicons/favicon.ico" type="image/x-icon" />
+  <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css" />
+  <link href="style.css" rel="stylesheet" type="text/css" />
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f5f7fa;
+      margin: 0;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    input[type="text"],
+    input[type="submit"] {
+      display: block;
+      width: 100%;
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+
+    input[type="submit"] {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    input[type="submit"]:hover {
+      background-color: #218838;
+    }
+
+    code {
+      background: #f1f1f1;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+
+    .note {
+      font-size: 0.9rem;
+      color: #555;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Exercise Tracker</h1>
+
+    <!-- Create User Card -->
+    <div class="card">
+      <h2>Create a New User</h2>
+      <p><code>POST /api/users</code></p>
+      <form id="create-user-form">
+        <input id="uname" type="text" name="username" placeholder="username" required />
+        <input type="submit" value="Create User" />
+      </form>
+      <pre id="create-user-output"
+        style="white-space: pre-wrap; background:#f4f4f4; padding:10px; border-radius:4px; margin-top:10px;"></pre>
+    </div>
+
+    <!-- Add Exercise Card -->
+    <div class="card">
+      <h2>Add Exercise</h2>
+      <p><code>POST /api/users/:_id/exercises</code></p>
+      <form action="/api/users/:_id/exercises" id="exercise-form" method="post">
+        <input id="uid" type="text" name=":_id" placeholder="User ID (:_id)" required />
+        <input id="desc" type="text" name="description" placeholder="Description*" required />
+        <input id="dur" type="text" name="duration" placeholder="Duration* (mins)" required />
+        <input id="date" type="text" name="date" placeholder="Date (YYYY-MM-DD)" />
+        <input type="submit" value="Add Exercise" />
+      </form>
+        <pre id="add-exercise-output"
+          style="white-space: pre-wrap; background:#f4f4f4; padding:10px; border-radius:4px; margin-top:10px;"></pre>
+
+    </div>
+
+    <!-- Get Logs Info -->
+    <div class="card">
+      <h2>Get User's Exercise Log</h2>
+      <p><code>GET /api/users/:_id/logs?[from][&amp;to][&amp;limit]</code></p>
+      <p class="note">[ ] = optional</p>
+      <p class="note"><strong>from, to</strong> = dates (yyyy-mm-dd); <strong>limit</strong> = number</p>
+      <form onsubmit="getLogs(event)">
+        <input type="text" id="log-user-id" placeholder="User ID (:_id)" required />
+        <input type="text" id="log-from" placeholder="From (YYYY-MM-DD)" />
+        <input type="text" id="log-to" placeholder="To (YYYY-MM-DD)" />
+        <input type="text" id="log-limit" placeholder="Limit" />
+        <input type="submit" value="Get Logs" />
+      </form>
+      <pre id="log-output"
+        style="white-space: pre-wrap; background:#f4f4f4; padding:10px; border-radius:4px; margin-top:10px;"></pre>
+    </div>
+
+    <!-- Get All Users Card -->
+    <div class="card">
+      <h2>Get All Users</h2>
+      <p><code>GET /api/users</code></p>
+      <button id="get-users-btn">Fetch Users</button>
+      <pre id="get-users-output"
+        style="white-space: pre-wrap; background:#f4f4f4; padding:10px; border-radius:4px; margin-top:10px;"></pre>
+    </div>
+  </div>
+
+  <script>
+  // CREATE USER
+  const createUserForm = document.getElementById("create-user-form");
+  const createUserOutput = document.getElementById("create-user-output");
+
+  createUserForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const username = document.getElementById("uname").value;
+
+    fetch("/api/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ username })
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        createUserOutput.textContent = JSON.stringify(data, null, 2);
+      })
+      .catch((err) => {
+        createUserOutput.textContent = "Error: " + err.message;
+      });
+  });
+
+
+  // GET ALL USERS
+  const getUsersBtn = document.getElementById("get-users-btn");
+  const getUsersOutput = document.getElementById("get-users-output");
+
+  getUsersBtn.addEventListener("click", () => {
+    fetch("/api/users")
+      .then((res) => res.json())
+      .then((data) => {
+        getUsersOutput.textContent = JSON.stringify(data, null, 2);
+      })
+      .catch((err) => {
+        getUsersOutput.textContent = "Error: " + err.message;
+      });
+  });
+
+  // ADD EXERCISE
+  const exerciseForm = document.getElementById("exercise-form");
+  const addExerciseOutput = document.getElementById("add-exercise-output");
+
+  exerciseForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const userId = document.getElementById("uid").value;
+    const description = document.getElementById("desc").value;
+    const duration = document.getElementById("dur").value;
+    const date = document.getElementById("date").value;
+
+    const body = new URLSearchParams({ description, duration, date });
+
+    fetch(`/api/users/${userId}/exercises`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        addExerciseOutput.textContent = JSON.stringify(data, null, 2);
+      })
+      .catch((err) => {
+        addExerciseOutput.textContent = "Error: " + err.message;
+      });
+  });
+
+  // GET LOGS
+  function getLogs(e) {
+    e.preventDefault();
+
+    const userId = document.getElementById("log-user-id").value;
+    const from = document.getElementById("log-from").value;
+    const to = document.getElementById("log-to").value;
+    const limit = document.getElementById("log-limit").value;
+
+    let url = `/api/users/${userId}/logs?`;
+    if (from) url += `from=${from}&`;
+    if (to) url += `to=${to}&`;
+    if (limit) url += `limit=${limit}`;
+
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => {
+        document.getElementById("log-output").textContent = JSON.stringify(data, null, 2);
+      })
+      .catch((err) => {
+        document.getElementById("log-output").textContent = "Error: " + err.message;
+      });
+  }
+
+  </script>
+</body>
+
 </html>
