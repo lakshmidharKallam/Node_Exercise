@@ -137,7 +137,7 @@ const getUserExerciseLogs = async (req, res) => {
             query += ` AND date <= ?`;
             params.push(to);
         }
-        query += ` ORDER BY date DESC`;
+        query += ` ORDER BY date ASC`;
 
         if (limit && !isNaN(parseInt(limit))) {
             query += ` LIMIT ?`;
