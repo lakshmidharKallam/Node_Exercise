@@ -121,47 +121,48 @@ const getUserExerciseLogs = async (req, res) => {
         if (err) return res.status(500).json({ error: 'Database error', details: err.message });
         if (!user) return res.status(404).json({ error: 'User not found' });
 
-        // as from to and limit are optional first lets have only the base query and then add them as needed
-        let query = `
-      SELECT id, description, duration, date
-      FROM exercises
-      WHERE user_id = ?
-    `;
-        const params = [userId];
+        const countQuery = `SELECT COUNT(*) AS total FROM exercises WHERE user_id = ?`;
+        db.get(countQuery, [userId], (err, countResult) => {
+            if (err) return res.status(500).json({ error: 'Failed to get total count', details: err.message });
 
-        if (from) {
-            query += ` AND date >= ?`;
-            params.push(from);
-        }
-        if (to) {
-            query += ` AND date <= ?`;
-            params.push(to);
-        }
-        query += ` ORDER BY date ASC`;
+            const totalCount = countResult.total;
+            let query = `
+                SELECT id, description, duration, date
+                FROM exercises
+                WHERE user_id = ?
+            `;
+            const params = [userId];
+            if (from) {
+                query += ` AND date >= ?`;
+                params.push(from);
+            }
+            if (to) {
+                query += ` AND date <= ?`;
+                params.push(to);
+            }
+            query += ` ORDER BY date ASC`;
+            if (limit && !isNaN(parseInt(limit))) {
+                query += ` LIMIT ?`;
+                params.push(parseInt(limit));
+            }
+            db.all(query, params, (err, rows) => {
+                if (err) return res.status(500).json({ error: 'Failed to fetch exercises', details: err.message });
 
-        if (limit && !isNaN(parseInt(limit))) {
-            query += ` LIMIT ?`;
-            params.push(parseInt(limit));
-        }
+                const logs = rows.map(row => ({
+                    id: row.id,
+                    description: row.description,
+                    duration: row.duration,
+                    date: new Date(row.date).toISOString().split('T')[0],
+                }));
+                const response = {
+                    id: user.id,
+                    username: user.username,
+                    logs,
+                    count: totalCount,  
+                };
 
-        db.all(query, params, (err, rows) => {
-            if (err) return res.status(500).json({ error: 'Failed to fetch exercises', details: err.message });
-            //get all exercises in logs
-            const logs = rows.map(row => ({
-                id: row.id,
-                description: row.description,
-                duration: row.duration,
-                date: new Date(row.date).toISOString().split('T')[0],
-            }));
-
-            const response = {
-                id: user.id,
-                username: user.username,
-                logs,
-                count: logs.length,
-            };
-
-            res.json(response);
+                res.json(response);
+            });
         });
     });
 }
