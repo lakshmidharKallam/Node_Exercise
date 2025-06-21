@@ -14,8 +14,7 @@ const getUsers = async (req, res) => {
 
 const createUser = async (req, res) => {
     const { username } = req.body;
-
-    if (!username) {
+    if (!username.trim()) {
         return res.status(400).json({ error: 'Username is required' });
     }
 
@@ -24,15 +23,15 @@ const createUser = async (req, res) => {
     }
 
     const insertQuery = `INSERT INTO users (username) VALUES (?)`;
-
-    db.run(insertQuery, [username], function (err) {
+    const trimmedUsername=username.trim()
+    db.run(insertQuery, [trimmedUsername], function (err) {
         if (err) {
             return res.status(500).json({ error: 'Failed to create user check db connection, and backend server', details: err.message });
         }
 
         res.json({
             id: this.lastID,
-            username,
+            trimmedUsername,
         });
     });
 }
@@ -69,7 +68,7 @@ const addExercise = async (req, res) => {
     const { description, duration, date } = req.body;
 
     //special check for description
-    if (!description || typeof description !== 'string' || /^\d+$/.test(description.trim())) {
+    if (!description.trim() || typeof description !== 'string' || /^\d+$/.test(description.trim())) {
         return res.status(400).json({ error: 'Description is required and must be a string' });
     }
     if (!duration || duration < 0 || isNaN(parseInt(duration))) {
@@ -93,14 +92,14 @@ const addExercise = async (req, res) => {
       INSERT INTO exercises (user_id, description, duration, date)
       VALUES (?, ?, ?, ?)
     `;
-
-        db.run(insertQuery, [userId, description, parseInt(duration), formattedDate], function (err) {
+        const trimmedDescription=description.trim()
+        db.run(insertQuery, [userId, trimmedDescription, parseInt(duration), formattedDate], function (err) {
             if (err) return res.status(500).json({ error: 'Failed to add exercise', details: err.message });
 
             res.json({
                 userId: parseInt(userId),
                 exerciseId: this.lastID,
-                description,
+                description:trimmedDescription,
                 duration: parseInt(duration),
                 date: formattedDate,
             });
