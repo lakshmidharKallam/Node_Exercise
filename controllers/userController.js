@@ -108,11 +108,13 @@ const addExercise = async (req, res) => {
 }
 
 const getUserExerciseLogs = async (req, res) => {
-    const userId = parseInt(req.params._id);
+    const rawId = req.params._id;
 
-    if (!/^\d+$/.test(userId)) {
+    if (!/^\d+$/.test(rawId)) {
         return res.status(400).json({ error: 'userId must be a valid number' });
     }
+
+    const userId = parseInt(rawId);
     const { from, to, limit } = req.query;
 
     const getUserQuery = `SELECT id, username FROM users WHERE id = ?`;
@@ -121,31 +123,38 @@ const getUserExerciseLogs = async (req, res) => {
         if (err) return res.status(500).json({ error: 'Database error', details: err.message });
         if (!user) return res.status(404).json({ error: 'User not found' });
 
-        const countQuery = `SELECT COUNT(*) AS total FROM exercises WHERE user_id = ?`;
-        db.get(countQuery, [userId], (err, countResult) => {
-            if (err) return res.status(500).json({ error: 'Failed to get total count', details: err.message });
+        // Build filter logic for both count and logs
+        let filterClause = ` WHERE user_id = ?`;
+        const filterParams = [userId];
+
+        if (from) {
+            filterClause += ` AND date >= ?`;
+            filterParams.push(from);
+        }
+
+        if (to) {
+            filterClause += ` AND date <= ?`;
+            filterParams.push(to);
+        }
+
+        const countQuery = `SELECT COUNT(*) AS total FROM exercises` + filterClause;
+        db.get(countQuery, filterParams, (err, countResult) => {
+            if (err) return res.status(500).json({ error: 'Failed to get count', details: err.message });
 
             const totalCount = countResult.total;
-            let query = `
+
+            let logQuery = `
                 SELECT id, description, duration, date
-                FROM exercises
-                WHERE user_id = ?
-            `;
-            const params = [userId];
-            if (from) {
-                query += ` AND date >= ?`;
-                params.push(from);
-            }
-            if (to) {
-                query += ` AND date <= ?`;
-                params.push(to);
-            }
-            query += ` ORDER BY date ASC`;
+                FROM exercises` + filterClause + ` ORDER BY date ASC`;
+
+            const logParams = [...filterParams];
+            //adding limit to the query after calculating count
             if (limit && !isNaN(parseInt(limit))) {
-                query += ` LIMIT ?`;
-                params.push(parseInt(limit));
+                logQuery += ` LIMIT ?`;
+                logParams.push(parseInt(limit));
             }
-            db.all(query, params, (err, rows) => {
+
+            db.all(logQuery, logParams, (err, rows) => {
                 if (err) return res.status(500).json({ error: 'Failed to fetch exercises', details: err.message });
 
                 const logs = rows.map(row => ({
@@ -154,18 +163,19 @@ const getUserExerciseLogs = async (req, res) => {
                     duration: row.duration,
                     date: new Date(row.date).toISOString().split('T')[0],
                 }));
+
                 const response = {
                     id: user.id,
                     username: user.username,
                     logs,
-                    count: totalCount,  
+                    count: totalCount, 
                 };
 
                 res.json(response);
             });
         });
     });
-}
+};
 
 module.exports = {
     getUsers,
